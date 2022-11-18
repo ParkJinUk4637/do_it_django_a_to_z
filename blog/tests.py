@@ -16,7 +16,7 @@ class TestView(TestCase):
         self.assertEqual(response.status_code, 200)
         # 1.3 페이지 타이틀은 'Blog'이다.
         soup = BeautifulSoup(response.content, 'html.parser')
-        self.assertEqual(soup.title.text, 'About me')
+        self.assertEqual(soup.title.text, 'Blog')
         # 1.4 내비게이션 바가 있다.
         navbar = soup.nav
         # 1.5 Blog, About Me라는 문구가 내비게이션 바가 있다.
