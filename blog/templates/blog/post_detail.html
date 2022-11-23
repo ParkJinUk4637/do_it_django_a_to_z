@@ -1,5 +1,5 @@
 {% extends 'blog/base.html' %}
-
+{% load crispy_forms_tags %}
 {% block head_title %}
 {{ post.title }} - Blog
 {% endblock %}
@@ -27,7 +27,8 @@
             <hr>
 
             {% if user.is_authenticated and user == post.author %}
-            <a class="btn btn-info btn-sm float-right" href="/blog/update_post/{{ post.pk }}/" role="button"><i class="fas fa-pen"></i>Edit Post</a>
+            <a class="btn btn-info btn-sm float-right" href="/blog/update_post/{{ post.pk }}/" role="button"><i
+                    class="fas fa-pen"></i>Edit Post</a>
             {% endif %}
             <!-- Post meta content--> <!-- Date/Time-->
             <div class="text-muted fst-italic mb-2">{{ post.created_at }}</div>
@@ -80,9 +81,20 @@
         <div class="card bg-light">
             <div class="card-body">
                 <!-- Comment form-->
-                <form class="mb-4"><textarea class="form-control" rows="3"
-                                             placeholder="Join the discussion and leave a comment!"></textarea>
+                {% if user.is_authenticated %}
+                <form id="comment-form" method="POST" action="{{ post.get_absolute_url }}new_comment/">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        {{ comment_form | crispy }}
+                    </div>
+                    <br/>
+                    <button type="submit" class="btn btn-primary">Submit</button>
                 </form>
+                <br/>
+                {% else %}
+                <a role="button" class="btn btn-outline-dark" href="#" data-bs-toggle="modal"
+                   data-bs-target="#loginModal">Log in and leave a comment</a>
+                {% endif %}
                 <!-- Comment with nested comments-->
 
 
@@ -94,7 +106,8 @@
                                                     src="https://dummyimage.com/50x50/ced4da/6c757d.jpg"
                                                     alt="..."/></div>
                     <div class="ms-3">
-                        <div class="fw-bold">{{ comment.author.username }}&nbsp;&nbsp;<small class="text-muted">{{ comment.created_at }}</small></div>
+                        <div class="fw-bold">{{ comment.author.username }}&nbsp;&nbsp;<small class="text-muted">{{
+                            comment.created_at }}</small></div>
                         </h5>
                         <p>{{ comment.content | linebreaks }}</p>
                     </div>
