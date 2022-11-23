@@ -51,10 +51,10 @@ class TestView(TestCase):
     def category_card_test(self, soup):
         categories_card = soup.find('div', id='categories-card')
         self.assertIn('Categories', categories_card.text)
-        #self.assertIn(f'{self.category_programming.name} ({self.category_programming.post_set_count()})',
+        # self.assertIn(f'{self.category_programming.name} ({self.category_programming.post_set_count()})',
         #              categories_card.text)
-        #self.assertIn(f'{self.category_music.name} ({self.category_music.post_set.count()})', categories_card.text)
-        #self.assertIn(f'미분류 (1)', categories_card.text)
+        # self.assertIn(f'{self.category_music.name} ({self.category_music.post_set.count()})', categories_card.text)
+        # self.assertIn(f'미분류 (1)', categories_card.text)
 
     def navbar_test(self, soup):
         navbar = soup.nav
@@ -90,23 +90,23 @@ class TestView(TestCase):
         post_001_card = main_area.find('div', id='post-1')
         self.assertIn(self.post_001.title, post_001_card.text)
         self.assertIn(self.post_001.category.name, post_001_card.text)
-        #self.assertIn(self.tag_hello.name, post_001_card.text)
-        #self.assertNotIn(self.tag_python.name, post_001_card.text)
-        #self.assertNotIn(self.tag_python_kor.name, post_001_card.text)
+        # self.assertIn(self.tag_hello.name, post_001_card.text)
+        # self.assertNotIn(self.tag_python.name, post_001_card.text)
+        # self.assertNotIn(self.tag_python_kor.name, post_001_card.text)
 
         post_002_card = main_area.find('div', id='post-2')
         self.assertIn(self.post_002.title, post_002_card.text)
         self.assertIn(self.post_002.category.name, post_002_card.text)
-        #self.assertIn(self.tag_hello.name, post_002_card.text)
-        #self.assertNotIn(self.tag_python.name, post_002_card.text)
-        #self.assertNotIn(self.tag_python_kor.name, post_002_card.text)
+        # self.assertIn(self.tag_hello.name, post_002_card.text)
+        # self.assertNotIn(self.tag_python.name, post_002_card.text)
+        # self.assertNotIn(self.tag_python_kor.name, post_002_card.text)
 
         post_003_card = main_area.find('div', id='post-3')
         self.assertIn(self.post_003.title, post_003_card.text)
         self.assertIn('미분류', post_003_card.text)
-        #self.assertIn(self.tag_hello.name, post_003_card.text)
-        #self.assertNotIn(self.tag_python.name, post_003_card.text)
-        #self.assertNotIn(self.tag_python_kor.name, post_003_card.text)
+        # self.assertIn(self.tag_hello.name, post_003_card.text)
+        # self.assertNotIn(self.tag_python.name, post_003_card.text)
+        # self.assertNotIn(self.tag_python_kor.name, post_003_card.text)
 
         self.assertIn(self.user_trump.username.upper(), main_area.text)
         self.assertIn(self.user_obama.username.upper(), main_area.text)
@@ -211,3 +211,50 @@ class TestView(TestCase):
         last_post = Post.objects.last()
         self.assertEqual(last_post.title, "Post Form 만들기")
         self.assertEqual(last_post.author.username, 'obama')
+
+    def test_update_post(self):
+        update_post_url = f'/blog/update_post/{self.post_003.pk}/'
+
+        # 로그인 하지 않은 경우
+        response = self.client.get(update_post_url)
+        self.assertNotEqual(response.status_code, 200)
+
+        # 로그인은 했지만 작성자가 아닌 경우
+        self.assertNotEqual(self.post_003.author, self.user_trump)
+        self.client.login(
+            username=self.user_trump.username,
+            password='somepassword'
+        )
+
+        response = self.client.get(update_post_url)
+        self.assertEqual(response.status_code, 403)
+
+        # 작성자(obama)가 접근하는 경우
+        self.client.login(
+            username=self.post_003.author.username,
+            password='somepassword'
+        )
+
+        response = self.client.get(update_post_url)
+        self.assertEqual(response.status_code, 200)
+        soup = BeautifulSoup(response.content, 'html.parser')
+
+        self.assertEqual('Edit Post - Blog', soup.title.text)
+        main_area = soup.find('div', id='main-area')
+        self.assertIn('Edit Post', main_area.text)
+
+        response = self.client.post(
+            update_post_url,
+            {
+                'title': '세 번째 포스트를 수정했습니다,',
+                'content': '안녕 세계? 우리는 하나!',
+                'category': self.category_music.pk
+            },
+            follow=True
+        )
+
+        soup = BeautifulSoup(response.content, 'html.parser')
+        main_area = soup.find('div', id='main-area')
+        #self.assertIn('세 번째 포스트를 수정했습니다.', main_area.text)
+        self.assertIn('안녕 세계? 우리는 하나!',main_area.text)
+        self.assertIn(self.category_music.name, main_area.text)
